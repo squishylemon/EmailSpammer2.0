@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.4.33213.308
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EmailSpammer2.0", "EmailSpammer2.0\EmailSpammer2.0.csproj", "{407BB144-DB84-45A6-A457-BD0D54992718}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{407BB144-DB84-45A6-A457-BD0D54992718}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{407BB144-DB84-45A6-A457-BD0D54992718}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{407BB144-DB84-45A6-A457-BD0D54992718}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{407BB144-DB84-45A6-A457-BD0D54992718}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {5A5B0028-6375-485A-B9B0-25D310E3F234}
+	EndGlobalSection
+EndGlobal
