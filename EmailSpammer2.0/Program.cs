@@ -2,14 +2,16 @@
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Security.Cryptography.X509Certificates;
 using MailKit.Net.Smtp;
 using MailKit.Security;
 using MimeKit;
 
 class Program
 {
-    static void Main(string[] args)
+    private static void Main(string[] args)
     {
+        
         Console.ForegroundColor= ConsoleColor.Green;
         Console.WriteLine(@"
  /$$                                                                                            /$$$$$$       /$$$$$$ 
@@ -24,12 +26,24 @@ class Program
                     | $$                                                                                              
                     |__/                                                                                             
             ");
-        BaseQuestions();
+        
 
+
+        Console.WriteLine("Show failed emails? (y/n)");
+        string disabledFails = Console.ReadLine();
+        bool showErrors = false;
+        if (disabledFails.ToLower() == "y")
+        {
+            showErrors = true;
+        }
+
+        BaseQuestions(showErrors);
     }
 
-    static void BaseQuestions()
+    static void BaseQuestions(bool showErrors)
     {
+
+
         Console.WriteLine("Enter your email address:");
         string fromEmail = Console.ReadLine();
 
@@ -63,16 +77,16 @@ class Program
 
         for (int i = 1; i <= numEmails; i++)
         {
-            tasks.Add(Task.Run(() => SendEmail(fromEmail, fromPassword, toEmailArray, subject, body, imagePath, i)));
+            tasks.Add(Task.Run(() => SendEmail(fromEmail, fromPassword, toEmailArray, subject, body, imagePath, i, showErrors)));
         }
 
         Task.WhenAll(tasks).Wait();
 
-        BaseQuestions();
+        BaseQuestions(showErrors);
     }
 
 
-    static void SendEmail(string fromEmail, string fromPassword, string[] toEmailArray, string subject, string body, string imagePath, int emailIndex)
+    static void SendEmail(string fromEmail, string fromPassword, string[] toEmailArray, string subject, string body, string imagePath, int emailIndex, bool showErrors)
     {
         try
         {
@@ -103,7 +117,12 @@ class Program
         }
         catch (Exception ex)
         {
-            Console.WriteLine("Error sending email: " + ex.Message);
+            if (showErrors == true)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("Error sending email retrying...");
+                Console.ForegroundColor = ConsoleColor.Green;
+            }
         }
     }
 
