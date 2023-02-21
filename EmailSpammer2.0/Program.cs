@@ -1,2 +1,111 @@
-﻿// See https://aka.ms/new-console-template for more information
-Console.WriteLine("Hello, World!");
+﻿using System;
+using System.Diagnostics;
+using System.IO;
+using System.Linq;
+using MailKit.Net.Smtp;
+using MailKit.Security;
+using MimeKit;
+
+class Program
+{
+    static void Main(string[] args)
+    {
+        Console.ForegroundColor= ConsoleColor.Green;
+        Console.WriteLine(@"
+ /$$                                                                                            /$$$$$$       /$$$$$$ 
+| $$                                                                                           /$$__  $$     /$$$_  $$
+| $$        /$$$$$$$  /$$$$$$   /$$$$$$  /$$$$$$/$$$$  /$$$$$$/$$$$   /$$$$$$   /$$$$$$       |__/  \ $$    | $$$$\ $$
+| $$       /$$_____/ /$$__  $$ |____  $$| $$_  $$_  $$| $$_  $$_  $$ /$$__  $$ /$$__  $$        /$$$$$$/    | $$ $$ $$
+| $$      |  $$$$$$ | $$  \ $$  /$$$$$$$| $$ \ $$ \ $$| $$ \ $$ \ $$| $$$$$$$$| $$  \__/       /$$____/     | $$\ $$$$
+| $$       \____  $$| $$  | $$ /$$__  $$| $$ | $$ | $$| $$ | $$ | $$| $$_____/| $$            | $$          | $$ \ $$$
+| $$$$$$$$ /$$$$$$$/| $$$$$$$/|  $$$$$$$| $$ | $$ | $$| $$ | $$ | $$|  $$$$$$$| $$            | $$$$$$$$ /$$|  $$$$$$/
+|________/|_______/ | $$____/  \_______/|__/ |__/ |__/|__/ |__/ |__/ \_______/|__/            |________/|__/ \______/ 
+                    | $$                                                                                              
+                    | $$                                                                                              
+                    |__/                                                                                             
+            ");
+        BaseQuestions();
+
+    }
+
+    static void BaseQuestions()
+    {
+        Console.WriteLine("Enter your email address:");
+        string fromEmail = Console.ReadLine();
+
+        Console.WriteLine("Enter your email password:");
+        string fromPassword = Console.ReadLine();
+
+        Console.WriteLine("Enter the recipient email addresses (separated by commas):");
+        string toEmails = Console.ReadLine();
+        string[] toEmailArray = toEmails.Split(',');
+
+        Console.WriteLine("Enter the email subject:");
+        string subject = Console.ReadLine();
+
+        Console.WriteLine("Enter the email body:");
+        string body = Console.ReadLine();
+
+        Console.WriteLine("Do you want to attach an image file? (y/n)");
+        string attachImageResponse = Console.ReadLine();
+
+        string imagePath = null;
+        if (attachImageResponse.ToLower() == "y")
+        {
+            Console.WriteLine("Enter the path to the image file:");
+            imagePath = Console.ReadLine();
+        }
+
+        Console.WriteLine("Enter the number of emails to send:");
+        int numEmails = int.Parse(Console.ReadLine());
+
+        var tasks = new List<Task>();
+
+        for (int i = 1; i <= numEmails; i++)
+        {
+            tasks.Add(Task.Run(() => SendEmail(fromEmail, fromPassword, toEmailArray, subject, body, imagePath, i)));
+        }
+
+        Task.WhenAll(tasks).Wait();
+
+        BaseQuestions();
+    }
+
+
+    static void SendEmail(string fromEmail, string fromPassword, string[] toEmailArray, string subject, string body, string imagePath, int emailIndex)
+    {
+        try
+        {
+            var message = new MimeMessage();
+            message.From.Add(new MailboxAddress("", fromEmail));
+            foreach (string toEmail in toEmailArray)
+            {
+                message.To.Add(new MailboxAddress(toEmail.Trim(), toEmail.Trim()));
+            }
+            message.Subject = subject;
+            var builder = new BodyBuilder();
+            builder.HtmlBody = body;
+            if (imagePath != null)
+            {
+                builder.Attachments.Add(imagePath);
+            }
+            message.Body = builder.ToMessageBody();
+
+            using (var client = new SmtpClient())
+            {
+                client.Connect("smtp.office365.com", 587, SecureSocketOptions.StartTls);
+                client.Authenticate(fromEmail, fromPassword);
+                client.Send(message);
+                client.Disconnect(true);
+            }
+
+            Console.WriteLine($"Email successfully sent ({emailIndex})");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Error sending email: " + ex.Message);
+        }
+    }
+
+
+}
