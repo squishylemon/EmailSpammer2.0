@@ -42,13 +42,18 @@ class Program
 
     static void BaseQuestions(bool showErrors)
     {
+        Console.WriteLine("Select SMTP server:");
+        Console.WriteLine("1. Gmail");
+        Console.WriteLine("2. Outlook");
+        int serverChoice = int.Parse(Console.ReadLine());
 
+        Console.WriteLine("Enter sender email addresses (separated by commas):");
+        string fromEmails = Console.ReadLine();
+        string[] fromEmailArray = fromEmails.Split(',');
 
-        Console.WriteLine("Enter your email address:");
-        string fromEmail = Console.ReadLine();
-
-        Console.WriteLine("Enter your email password:");
-        string fromPassword = Console.ReadLine();
+        Console.WriteLine("Enter sender passwords (separated by commas):");
+        string fromPasswords = Console.ReadLine();
+        string[] fromPasswordArray = fromPasswords.Split(',');
 
         Console.WriteLine("Enter the recipient email addresses (separated by commas):");
         string toEmails = Console.ReadLine();
@@ -77,7 +82,20 @@ class Program
 
         for (int i = 1; i <= numEmails; i++)
         {
-            tasks.Add(Task.Run(() => SendEmail(fromEmail, fromPassword, toEmailArray, subject, body, imagePath, i, showErrors)));
+            for (int j = 0; j < fromEmailArray.Length; j++)
+            {
+                var fromEmail = fromEmailArray[j].Trim();
+                var fromPassword = fromPasswordArray[j].Trim();
+
+                if (serverChoice == 1)
+                {
+                    tasks.Add(Task.Run(() => SendEmailGmail(fromEmail, fromPassword, toEmailArray, subject, body, imagePath, i, showErrors)));
+                }
+                else
+                {
+                    tasks.Add(Task.Run(() => SendEmailOutlook(fromEmail, fromPassword, toEmailArray, subject, body, imagePath, i, showErrors)));
+                }
+            }
         }
 
         Task.WhenAll(tasks).Wait();
@@ -86,7 +104,8 @@ class Program
     }
 
 
-    static void SendEmail(string fromEmail, string fromPassword, string[] toEmailArray, string subject, string body, string imagePath, int emailIndex, bool showErrors)
+
+    static void SendEmailOutlook(string fromEmail, string fromPassword, string[] toEmailArray, string subject, string body, string imagePath, int emailIndex, bool showErrors)
     {
         try
         {
@@ -122,7 +141,51 @@ class Program
                 Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine("Error sending email retrying...");
                 Console.ForegroundColor = ConsoleColor.Green;
+                SendEmailOutlook(fromEmail, fromPassword, toEmailArray, subject, body, imagePath, 0, showErrors);
             }
+            SendEmailOutlook(fromEmail, fromPassword, toEmailArray, subject, body, imagePath, 0, showErrors);
+        }
+    }
+
+    static void SendEmailGmail(string fromEmail, string fromPassword, string[] toEmailArray, string subject, string body, string imagePath, int emailIndex, bool showErrors)
+    {
+        try
+        {
+            var message = new MimeMessage();
+            message.From.Add(new MailboxAddress("", fromEmail));
+            foreach (string toEmail in toEmailArray)
+            {
+                message.To.Add(new MailboxAddress(toEmail.Trim(), toEmail.Trim()));
+            }
+            message.Subject = subject;
+            var builder = new BodyBuilder();
+            builder.HtmlBody = body;
+            if (imagePath != null)
+            {
+                builder.Attachments.Add(imagePath);
+            }
+            message.Body = builder.ToMessageBody();
+
+            using (var client = new SmtpClient())
+            {
+                client.Connect("smtp.gmail.com", 587, SecureSocketOptions.StartTls);
+                client.Authenticate(fromEmail, fromPassword);
+                client.Send(message);
+                client.Disconnect(true);
+            }
+
+            Console.WriteLine($"Email successfully sent ({emailIndex})");
+        }
+        catch (Exception ex)
+        {
+            if (showErrors == true)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("Error sending email retrying...");
+                Console.ForegroundColor = ConsoleColor.Green;
+                SendEmailGmail(fromEmail, fromPassword, toEmailArray, subject, body, imagePath, 0, showErrors);
+            }
+            SendEmailGmail(fromEmail, fromPassword, toEmailArray, subject, body, imagePath, 0, showErrors);
         }
     }
 
